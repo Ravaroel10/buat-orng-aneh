@@ -19,7 +19,7 @@ navigator.mediaDevices.getUserMedia({ video: true })
 snapBtn.addEventListener('click', () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Mirror the image horizontally
+  // Mirror image
   ctx.save();
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
@@ -29,24 +29,26 @@ snapBtn.addEventListener('click', () => {
   const frameImg = new Image();
   frameImg.crossOrigin = "anonymous";
   frameImg.onload = () => {
-    // Kirim ke server
-const imageData = canvas.toDataURL('image/png');
-
-fetch('http://10.5.60.16:8000/upload', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({ image: imageData })
-})
-.then(response => response.json())
-.then(data => {
-  console.log('Upload success:', data);
-})
-.catch(error => {
-  console.error('Upload failed:', error);
-});
     ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+
+    // Kirim ke server
+    canvas.toBlob(blob => {
+      const formData = new FormData();
+      formData.append("file", blob, "photo.png"); // Nama bebas
+
+      fetch("http://10.5.60.16:9000/upload", {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        console.log("Uploaded:", data);
+      })
+      .catch(error => {
+        console.error("Upload failed:", error);
+      });
+    }, "image/png");
+
     canvas.style.display = 'block';
     video.style.display = 'none';
     frame.style.display = 'none';
@@ -59,7 +61,7 @@ fetch('http://10.5.60.16:8000/upload', {
 // Download photo
 downloadBtn.addEventListener('click', () => {
   const link = document.createElement('a');
-  link.download = 'bleh_photobooth.png';
+  link.download = 'photo_booth.png';
   link.href = canvas.toDataURL('image/png');
   link.click();
 });
