@@ -1,43 +1,14 @@
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-import base64
-import os
-from datetime import datetime
+import requests
 
-app = FastAPI()
+# Ganti dengan path gambar kamu
+file_path = "your_image.png"
+receiver_ip = "10.5.60.127"  # Ganti dengan IP laptop
 
-# Izinkan akses dari semua origin (biar bisa diakses dari frontend)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+url = f"http://{receiver_ip}:9000/upload"
 
-@app.post("/upload")
-async def upload_photo(request: Request):
-    try:
-        data = await request.json()
-        image_data = data.get("image")
+with open(file_path, "rb") as f:
+    files = {"file": f}
+    response = requests.post(url, files=files)
 
-        if not image_data:
-            return {"status": "error", "message": "No image provided."}
-
-        # Pisahkan header base64
-        header, encoded = image_data.split(",", 1)
-        binary_data = base64.b64decode(encoded)
-
-        # Simpan ke folder
-        os.makedirs("photos", exist_ok=True)
-        filename = f"photo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-        filepath = os.path.join("photos", filename)
-
-        with open(filepath, "wb") as f:
-            f.write(binary_data)
-
-        print(f"[✔] Photo saved at: {filepath}")
-        return {"status": "success", "filename": filename}
-    
-    except Exception as e:
-        print(f"[✘] Upload failed: {e}")
-        return {"status": "error", "message": str(e)}
+print("Status:", response.status_code)
+print("Response:", response.text)
